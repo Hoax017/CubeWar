@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport">
+
+		<title>CubeWar</title>
+
+		<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy&display=swap" rel="stylesheet">
+
+		<style type="text/css">
+		 	
+			html, body {
+				margin: 0;
+				width: 100%;
+				height: 100%;
+			}
+
+			body {
+				font-family: 'Luckiest Guy', cursive;
+				background-color: #38373E;
+			}
+
+			@keyframes animateColors {
+				0% {
+					background-color: red;
+				}
+				25% {
+					background-color: yellow;
+				}
+				50% {
+					background-color: green;
+				}
+				75% {
+					background-color: blue;
+				}
+				100% {
+					background-color: red;
+				}
+			}
+				
+			main {
+				position: absolute;
+				left: calc(50% - 200px);
+				top: calc(50% - 150px);
+				background-color: #3773A5;
+				width: 400px;
+				height: 300px;
+
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				border-radius: 5px solid #F90404;
+
+				animation: animateColors 10s infinite linear;
+			}
+
+			button{
+				font: inherit;
+				text-align: center;
+				width: 75px;
+				height: 50px;
+
+				border: 3px solid black;
+				border-radius: 10px;
+				background: none;
+				cursor: pointer;
+
+				transition: border 0.3s ease;
+			}
+			button:hover {
+				border-color: white;
+			}
+
+			.fleche-gauche {
+				background-image: url('img/left-arrow.png');
+				background-size: contain;
+				width: 25px;
+				height: 25px;
+				display: inline-block;
+			}
+
+			.fleche-droite {
+				background-image: url('img/left-arrow.png');
+				background-size: contain;
+				transform: rotate(180deg);
+				height: 25px;
+				width: 25px;
+				display: inline-block;
+			}
+
+			#personnage-selectionne, #keyboard-selectionne {
+				display: inline-block;
+				height: 25px;
+			}
+
+			a > button {
+				text-decoration: none;
+				color: #000;
+			}
+
+			main > p {
+				text-align: center;
+			}
+		</style>
+			
+	</head>
+
+	<body>
+		
+		<main>
+			<h1>CubeWar</h1>
+			<p></p>
+			<div>
+				<div class="fleche-gauche" onclick="selectionnerGaucheKeyboard()"></div>
+				<div id="keyboard-selectionne"></div>
+				<div class="fleche-droite" onclick="selectionnerDroiteKeyboard()"></div>
+			</div>
+			<div>
+				<div class="fleche-gauche" onclick="selectionnerGauchePlayer()"></div>
+				<img id="personnage-selectionne" src="img/moi.png"></img>
+				<div class="fleche-droite" onclick="selectionnerDroitePlayer()"></div>
+			</div>
+			<a href="cube.html">
+				<button>jouer</button>
+			</a>
+		</main>
+
+		<script type="text/javascript">
+
+
+			var keyboardId = parseInt(localStorage.getItem("keyboard")) || 0;
+			var pleyerId = parseInt(localStorage.getItem("player")) || 0;
+			var players = ['img/moi.png', 'img/moi_2.png', 'img/moi_3.png', 'img/moi_4.png', 'img/moi_5.png'];
+			var gameTypes = ['AZERTY', 'QWERTY'];
+			var playerDiv = document.getElementById("personnage-selectionne");
+			var keyboardDiv = document.getElementById("keyboard-selectionne");
+			playerDiv.src = players[pleyerId];
+			keyboardDiv.innerHTML = gameTypes[keyboardId];
+
+			function selectionnerGauchePlayer(){
+				if (pleyerId == 0){
+					pleyerId = players.length - 1;
+				}
+				else {
+					pleyerId = pleyerId - 1;
+				}
+				playerDiv.src = players[pleyerId];
+				localStorage.setItem("player", pleyerId)
+			}
+
+			function selectionnerDroitePlayer(){
+				if (pleyerId == players.length - 1){
+					pleyerId = 0;
+				}
+				else {
+					pleyerId = pleyerId + 1;
+				}
+				playerDiv.src = players[pleyerId];
+				localStorage.setItem("player", pleyerId)
+			}
+
+			function selectionnerGaucheKeyboard(){
+				if (keyboardId == 0){
+					keyboardId = gameTypes.length - 1;
+				}
+				else {
+					keyboardId = keyboardId - 1;
+				}
+				keyboardDiv.innerHTML = gameTypes[keyboardId];
+				localStorage.setItem("keyboard", keyboardId)
+			}
+
+			function selectionnerDroiteKeyboard(){
+				if (keyboardId == gameTypes.length - 1){
+					keyboardId = 0;
+				}
+				else {
+					keyboardId = keyboardId + 1;
+				}
+				keyboardDiv.innerHTML = gameTypes[keyboardId];
+				localStorage.setItem("keyboard", keyboardId)
+			}
+
+
+			
+
+			var lastScore = parseInt(localStorage.getItem("lastScore") || "0"),
+				highTime = parseInt(localStorage.getItem("highScore") || "0"),
+				message = document.querySelector('main p');
+
+			if (lastScore) {
+				message.innerHTML = "Vous score " + lastScore + ".<br>" + 
+									"Meileur Score " + highTime + ".";
+			}
+
+			// alert(getParameter('survived'));
+		</script>
+		
+	</body>
+</html>

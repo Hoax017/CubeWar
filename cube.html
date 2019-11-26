@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport">
+
+		<title>CubeWar</title>
+
+		<style type="text/css">
+			html,
+			body {
+				margin: 0 ;
+				padding: 0 ;
+				position: absolute ;
+				width: 100vw ;
+				height: 100vh ;
+				overflow: hidden ;
+				background-image: url("img/background.jpg") ;
+				background-size: 250px ;
+			}
+			   
+			body, body * {
+				box-sizing: border-box ;
+			}
+
+			footer {
+				position: fixed ;
+				bottom: 40px ;
+				left: 0 ;
+				width: 100% ;
+				padding: 16px ;
+				text-align: center ;
+			}
+
+			button {
+				width: 80px ;
+				margin: 4px ;
+				padding: 8px ;
+				border: 2px solid #00400080 ;
+				border-radius: 8px ;
+				background: #e0f0c0 ;
+				font-weight: bold ;
+				cursor: pointer ;
+				outline: none ;
+			}
+			button:hover {
+				border: 2px solid #F81313 ;
+			}
+			button:active {
+				color: #F81313 ;
+				background: #408000 ;
+			}
+			menu {
+				text-shadow: 1px 1px 2px red, 0 0 1em blue, 0 0 0.2em blue;
+				color: white;
+				font-size: 24px;
+				position: absolute;
+				top: 0;
+				right: 20px;
+			}
+			.cube{
+				position: absolute ;
+				left: 0 ;
+				top: 0 ;
+				width: 45px ;
+				height: 45px ;
+				background-size: cover;
+				border-radius: 20%;
+				transition: top .2s ease-in-out, left .2s ease-in-out;
+			}
+
+			.cube.item.coin {
+				background-image: url('img/piece.png');
+			}
+
+			.cube.item.shield {
+				background-image: url('img/shield.png');
+			}
+
+			.cube.player {
+				border: 3px solid #ffffff80;
+				background-image: url('img/moi.png');
+			}
+
+			.cube.bullet {
+				background-image: url('img/bullet.png');
+			}
+			.cube.bullet.north,
+			.cube.item.bullet  {
+				transform: rotate(-90deg);
+			}
+			.cube.bullet.south {
+				transform: rotate(90deg);
+			}
+			.cube.bullet.west {
+				transform: rotate(180deg);
+			}
+			.cube.shield {
+				border: 3px solid #fbff7d;
+			}
+
+			.cube.enemy {
+				border: 3px solid #cc0000;
+			}
+			.cube.enemy.class1 {
+				background-image: url('img/mechant.png');
+			}
+			.cube.enemy.class2 {
+				background-image: url('img/mechant2.png');
+			}
+			.cube.enemy.class3 {
+				background-image: url('img/mechant3.png');
+			}
+		</style>
+	</head>
+
+	<body>
+		<main>
+
+			<img class="cube player" src="moi.png"></img>
+
+		</main>
+		<menu>
+			<div id="score">Score: <span>0</span></div>
+			<div id="life">Lives: <span>5</span>/5</div>
+			<div id="nbBullets">Bullets: <span>100</span></div>
+		</menu>
+		<script type="text/javascript">
+			function getRandomInt(min, max) {
+				min = Math.ceil(min);
+				max = Math.floor(max);
+				return Math.floor(Math.random() * (max - min + 1)) + min;
+			}
+
+			var pressedKey = {
+				up: false,
+				down: false,
+				left: false,
+				right: false
+			};
+			var cubeSize = 45;
+			var limitLeft = 0;
+			var limitTop = 0;
+			var limitRight = Math.floor(innerWidth / cubeSize) - 1;
+			var limitBottom = Math.floor(innerHeight / cubeSize) - 1;
+			
+
+			var player = {
+				element:  document.querySelector('.cube.player'),
+				positionX: Math.round(innerWidth / (cubeSize * 2)), // Position du cube par rapport a la gauche de la fenetre
+				positionY: Math.round(innerHeight / (cubeSize * 2)), // Position du cube par rapport au haut de la fenetre
+				life: 5,
+				score: 0,
+				nbBullets: 100,
+			}
+
+
+			var items = [];
+			var bullets = [];
+			var enemies = [];
+			var interval;
+			var difficulty = 0;
+			
+			var players = ['img/moi.png', 'img/moi_2.png', 'img/moi_3.png', 'img/moi_4.png', 'img/moi_5.png'];
+			player.element.src = players[parseInt(localStorage.getItem("player")) || 0];
+			var gameTypes = ['AZERTY', 'QWERTY'];
+			gameType = gameTypes[parseInt(localStorage.getItem("keyboard")) || 0];
+
+			updateCube(player);
+			createEnemy("follower", 1)
+			createEnemy("follower", 1)
+
+
+			function up(cube, verifierLesEnemenie) {
+				if (verifierLesEnemenie) {
+					for (var enemy of enemies) {
+						if (enemy.positionY == cube.positionY - 1 && enemy.positionX == cube.positionX) {
+							return;
+						}
+					}
+				}
+					
+				cube.positionY = cube.positionY - 1;
+				updateCube(cube);
+			}
+			function down(cube, verifierLesEnemenie) {
+				if (verifierLesEnemenie) {
+					for (var enemy of enemies) {
+						if (enemy.positionY == cube.positionY + 1 && enemy.positionX == cube.positionX) {
+							return;
+						}
+					}
+				}
+				cube.positionY = cube.positionY + 1;
+				updateCube(cube);
+			}
+			function left(cube, verifierLesEnemenie) {
+				if (verifierLesEnemenie) {
+					for (var enemy of enemies) {
+						if (enemy.positionY == cube.positionY && enemy.positionX == cube.positionX - 1) {
+							return;
+						}
+					}
+				}
+				cube.positionX = cube.positionX - 1;
+				updateCube(cube);
+			}
+			function right(cube, verifierLesEnemenie) {
+				if (verifierLesEnemenie) {
+					for (var enemy of enemies) {
+						if (enemy.positionY == cube.positionY && enemy.positionX == cube.positionX + 1) {
+							return;
+						}
+					}
+				}
+				cube.positionX = cube.positionX + 1;
+				updateCube(cube);
+			}
+
+			function updateCube(cube) {
+				let isBullet = !!cube.element.classList.contains("bullet");
+				if (!isBullet && cube.positionX > limitRight) cube.positionX = limitRight;
+				else if (!isBullet && cube.positionX < limitLeft) cube.positionX = limitLeft;
+				if (!isBullet && cube.positionY > limitBottom) cube.positionY = limitBottom;
+				else if (!isBullet && cube.positionY < limitTop) cube.positionY = limitTop; 
+
+				cube.element.style.left = (cubeSize * cube.positionX) + 'px';
+				cube.element.style.top = (cubeSize * cube.positionY) + 'px';
+				checkCollision(cube);
+
+				if (isBullet && (
+						cube.positionX > limitRight || 
+						cube.positionX < limitLeft ||
+						cube.positionY > limitBottom ||
+						cube.positionY < limitTop
+					)
+				) {
+					cube.element.remove();
+					bullets = bullets.filter((bullet) => bullet !== cube);
+				}
+			}
+
+			function die() {
+				if ((localStorage.getItem("highScore") || 0) < player.score)
+					localStorage.setItem("highScore", player.score)
+				localStorage.setItem("lastScore", player.score)
+				window.location.href = "index.html";
+			}
+
+			function getItem(item) {
+				setTimeout(() => item.element.remove(), 200);
+				switch (item.type) {
+					case "coin":
+						player.score += 100
+						break;
+					case "shield":
+						player.element.classList.add("shield");
+						setTimeout(() => player.element.classList.remove("shield"), 5000)
+						break;
+					case "bullet":
+						player.nbBullets += 20;
+						document.querySelector('div#nbBullets span').innerText = player.nbBullets;
+						break;
+				}
+				items = items.filter((citem) => item !== citem);
+			}
+
+			// Si la position du cube 1 est égale à la position du cube 2, changer la couleurs des deux cubes
+			// Propriété CSS -> changer la couleur de fond
+			function checkCollision(cubeQuiABouge) {
+				for (var item of items) {
+					if (
+						player.positionX == item.positionX && 
+						player.positionY == item.positionY
+					){
+						getItem(item);
+					}
+				}
+				allEnemies: for (var enemy of enemies) {
+					for (var bullet of bullets) {
+						if (
+							enemy.positionX == bullet.positionX && 
+							enemy.positionY == bullet.positionY
+						){
+							enemy.dead = true;
+							bullet.element.remove();
+							bullets = bullets.filter((cbullet) => bullet !== cbullet);
+							player.score += 10
+							continue allEnemies;
+						}
+					}
+					if (
+						enemy.positionX == player.positionX && 
+						enemy.positionY == player.positionY
+					){
+						if (!player.element.classList.contains("shield"))
+						{
+							player.life -= enemy.level;
+							if (player.life <= 0) {
+								setTimeout(die, 200);
+							} else {
+								document.querySelector('div#life span').innerText = player.life;
+								player.element.classList.add("shield");
+								setTimeout(() => player.element.classList.remove("shield"), 3000)
+							}
+						}
+					}
+				}
+				enemies = enemies.filter((enemy) => {
+					if (enemy.dead) enemy.element.remove();
+					return !enemy.dead
+				});
+			}
+
+			// Fonction permettant de bouger un ennemi cubeQuiBouge en le faisant suivre le joueur
+			function bougeEnemy(cubeQuiBouge){
+				if(cubeQuiBouge.type == "follower"){
+					if (cubeQuiBouge.positionX < player.positionX) {
+						right(cubeQuiBouge, true);
+					} else if (cubeQuiBouge.positionX > player.positionX) {
+						left(cubeQuiBouge, true);
+					} 
+					if (cubeQuiBouge.positionY < player.positionY) {
+						down(cubeQuiBouge, true);
+					} else if (cubeQuiBouge.positionY > player.positionY) {
+						up(cubeQuiBouge, true);
+					}
+				}
+				else if(cubeQuiBouge.type == "aleatoire"){
+					// Si l'ennemi n'a pas de deplacement precedent, on lui en donne un
+					if (!cubeQuiBouge.deplacement){
+						let nouvelleDirection = getRandomInt(1,4);
+						if (nouvelleDirection == 1) cubeQuiBouge.deplacement = "north";
+						if (nouvelleDirection == 2) cubeQuiBouge.deplacement = "west";
+						if (nouvelleDirection == 3) cubeQuiBouge.deplacement = "south";
+						if (nouvelleDirection == 4) cubeQuiBouge.deplacement = "east";
+					}
+
+					var valeurAleatoire = getRandomInt(1,4);
+					if (valeurAleatoire == 1){
+						let nouvelleDirection = getRandomInt(1,4);
+						if (nouvelleDirection == 1) cubeQuiBouge.deplacement = "north";
+						if (nouvelleDirection == 2) cubeQuiBouge.deplacement = "west";
+						if (nouvelleDirection == 3) cubeQuiBouge.deplacement = "south";
+						if (nouvelleDirection == 4) cubeQuiBouge.deplacement = "east";
+					}
+
+					if(cubeQuiBouge.deplacement == "north" && cubeQuiBouge.positionY > limitTop){
+						up(cubeQuiBouge, true);
+					}
+					if(cubeQuiBouge.deplacement == "west" && cubeQuiBouge.positionX > limitLeft){
+						left(cubeQuiBouge, true);
+					}
+					if(cubeQuiBouge.deplacement == "south" && cubeQuiBouge.positionY < limitBottom){
+						down(cubeQuiBouge, true);
+					}
+					if(cubeQuiBouge.deplacement == "east" && cubeQuiBouge.positionX < limitRight){
+						right(cubeQuiBouge, true);
+					}
+				}
+			}
+
+			function jeu() { 
+				for (var enemy of enemies) {
+					for (var i = 0; i < enemy.level; i++) {
+						bougeEnemy(enemy);
+					}
+				}
+			}
+			interval = setInterval(jeu, 500 - difficulty);// toute les demi-secondes
+			
+
+			function createEnemy(nouveauType, level) {
+				var nouvelleDivEnemy = document.createElement('div');
+				nouvelleDivEnemy.className = 'cube enemy';
+				document.querySelector('main').appendChild(nouvelleDivEnemy)
+				var enemy = {
+					element:  nouvelleDivEnemy,
+					positionX: getRandomInt(0, limitRight), // Position du cube par rapport a la gauche de la fenetre
+					positionY: getRandomInt(0, limitBottom), // Position du cube par rapport au haut de la fenetre
+					type: nouveauType,
+					level: level || getRandomInt(1, 3)
+				}
+				enemy.element.classList.add("class"+enemy.level);
+				updateCube(enemy);
+				enemies.push(enemy);
+			}
+			
+
+			function shot(direction) {
+				if (!player.nbBullets) return;
+				player.nbBullets--;
+				var bulletDiv = document.createElement('div');
+				bulletDiv.className = 'cube bullet';
+				document.querySelector('main').appendChild(bulletDiv)
+				var bullet = {
+					element:  bulletDiv,
+					positionX: player.positionX,
+					positionY: player.positionY,
+					direction: direction,
+					damage: 5
+				}
+				bullet.element.classList.add(direction);
+				updateCube(bullet);
+				bullets.push(bullet);
+				document.querySelector('div#nbBullets span').innerText = player.nbBullets;
+			}
+
+			function popItem(){
+				rendomType = getRandomInt(1, 100);
+				if (rendomType < 10) type = "shield";
+				else if (rendomType < 30) type = "bullet";
+				else  type = "coin";
+				var itemDiv = document.createElement('div');
+				itemDiv.className = 'cube item';
+				document.querySelector('main').appendChild(itemDiv)
+				let item = {
+					element: itemDiv,
+					positionX: getRandomInt(0, limitRight),
+					positionY: getRandomInt(0, limitBottom),
+					type: type
+				}
+				itemDiv.classList.add(type);
+				items.push(item);
+				updateCube(item);
+			}
+
+			function increaseTime(){
+				player.score++;
+				document.querySelector('div#score span').innerText = player.score;
+				if (player.score % 10 == 0) {
+					if (enemies.length < 20) {
+						createEnemy("follower");
+						createEnemy("aleatoire");
+					}
+					difficulty += 50;
+					if (difficulty > 800)
+						difficulty = 800;
+					clearInterval(interval);
+					interval = setInterval(jeu, 1000 - difficulty);
+				}
+				if (player.score % 5 == 0) {
+					popItem();
+				}
+			}
+			setInterval(increaseTime, 1000);
+
+			let speed = 150;
+			function loop(timestamp) {
+				if (pressedKey.up) up(player);
+				if (pressedKey.down) down(player);
+				if (pressedKey.right) right(player);
+				if (pressedKey.left) left(player);
+
+				for (var bullet of bullets) {
+					if (bullet.direction === "north") bullet.positionY--;
+					else if (bullet.direction === "south") bullet.positionY++;
+					else if (bullet.direction === "west") bullet.positionX--;
+					else if (bullet.direction === "east") bullet.positionX++;
+					updateCube(bullet)
+				}
+				setTimeout(loop, speed)
+			}
+			setTimeout(loop, speed);
+			let nbKeyLoop = 0;
+			document.querySelector('body').addEventListener('keydown', (event) => {
+				event.preventDefault();
+				nbKeyLoop++;
+				if (nbKeyLoop % 100 && speed > 100) speed = (speed || 2) -2;
+				if (event.keyCode == 38) pressedKey.up = true;
+				else if (event.keyCode == 40) pressedKey.down = true;
+				else if (event.keyCode == 39) pressedKey.right = true;
+				else if (event.keyCode == 37) pressedKey.left = true;
+				else if (gameType === "QWERTY" && event.keyCode == 87) shot("north"); // W
+				else if (gameType === "QWERTY" && event.keyCode == 65) shot("west"); // A
+				else if (gameType === "AZERTY" && event.keyCode == 90) shot("north"); // Z
+				else if (gameType === "AZERTY" && event.keyCode == 81) shot("west"); // Q
+				else if (event.keyCode == 83) shot("south"); // S
+				else if (event.keyCode == 68) shot("east"); // D
+			})
+			document.querySelector('body').addEventListener('keyup', (event) => {
+				event.preventDefault();
+				if (!pressedKey.up &&
+					!pressedKey.down &&
+					!pressedKey.right &&
+					!pressedKey.left
+				) {
+					speed = 150;
+					nbKeyLoop = 0;
+				}
+				if (event.keyCode == 38) pressedKey.up = false;
+				else if (event.keyCode == 40) pressedKey.down = false;
+				else if (event.keyCode == 39) pressedKey.right = false;
+				else if (event.keyCode == 37) pressedKey.left = false;
+			})
+		</script>
+	</body>
+</html>
